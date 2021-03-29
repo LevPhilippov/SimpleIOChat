@@ -1,7 +1,7 @@
 package lev.philippov;
 
 
-public class MainApp{
+public class ServerApp {
     public static void main(String[] args) {
         new Server().startServer();
     }

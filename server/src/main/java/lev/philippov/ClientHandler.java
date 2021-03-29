@@ -22,17 +22,19 @@ public class ClientHandler {
     public void handleTheClient() {
         try {
             DataInputStream dis = new DataInputStream(socket.getInputStream());
+            DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
 
             Thread t = new Thread(() -> {
                 try {
                    while (true) {
-                       int x;
-                       while ((x=dis.read())!=-1) {
-                           System.out.println(x);
-                       }
-//                       String message= dis.readUTF();
-//                        if (message.equals("/end")) break;
-//                       System.out.println(message);
+//                       int x;
+//                       while ((x=dis.read())!=-1) {
+//                           System.out.println(x);
+//                       }
+                       String message= dis.readUTF();
+                        if (message.equals("/end")) break;
+                       System.out.println(message);
+                       dos.writeUTF("ECHO: "+ message);
                    }
                 } catch (IOException e) {
                     logger.error(e.getMessage());
@@ -61,4 +63,6 @@ public class ClientHandler {
         }
         logger.info("Потоки клиента закрылись");
     }
+
+
 }
