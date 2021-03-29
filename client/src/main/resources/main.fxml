@@ -5,6 +5,11 @@
 <?import javafx.scene.control.TextField?>
 
 <VBox fx:controller="lev.philippov.Controller" xmlns:fx="http://javafx.com/fxml" alignment="center">
+    <HBox fx:id="signInArea" >
+        <TextField maxWidth="Infinity" HBox.hgrow="ALWAYS" maxHeight="100"/>
+        <TextField maxWidth="Infinity"  HBox.hgrow="ALWAYS" maxHeight="100"/>
+        <Button text="Войти" maxWidth="150" maxHeight="100" minWidth="100" onAction="#getConnectiontoServer"/>
+    </HBox>
     <TextArea fx:id="textArea" VBox.vgrow="ALWAYS" editable="false"/>
     <HBox>
         <TextField fx:id="msgField" promptText="Введите сообщение..." HBox.hgrow="ALWAYS" onAction="#sendMsg"/>
