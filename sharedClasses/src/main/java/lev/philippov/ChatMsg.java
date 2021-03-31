@@ -1,12 +1,13 @@
 package lev.philippov;
 
+import lombok.Builder;
 import lombok.Data;
-import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 
 @Data
-public class ChatClient implements Serializable {
+@Builder
+public class ChatMsg implements Serializable {
 
     private Long id;
 

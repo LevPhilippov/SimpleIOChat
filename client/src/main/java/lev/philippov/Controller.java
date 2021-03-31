@@ -16,7 +16,7 @@ import java.util.ResourceBundle;
 public class Controller implements Initializable {
 
     @FXML
-    TextField msgField;
+    TextField msgField, loginField, passField;
     @FXML
     TextArea textArea;
     @FXML
@@ -25,11 +25,15 @@ public class Controller implements Initializable {
     Network network;
 
     @Override
-    public void initialize(URL location, ResourceBundle resources) {}
+    public void initialize(URL location, ResourceBundle resources) {
+        this.network = new Network(this);
+        textArea.setDisable(true);
+        msgField.setDisable(true);
+    }
 
 
     public void sendMsg(ActionEvent actionEvent) {
-        network.sendMsg(msgField.getText());
+        network.sendObj(msgField.getText());
         msgField.clear();
         msgField.requestFocus();
     }
@@ -40,13 +44,19 @@ public class Controller implements Initializable {
 
 
     public void getConnectiontoServer(ActionEvent actionEvent) {
-        this.network = new Network(this);
+        network.sendAuthMsg(loginField.getText().trim(),passField.getText() );
+    }
+
+    public void logIn(){
         List<Node> list = signInArea.getChildren();
         for (Node node : list) {
             if(node instanceof TextField) {
                 ((TextField) node).clear();
+                node.setDisable(true);
             }
+            textArea.setDisable(false);
+            msgField.setDisable(false);
+
         }
-        signInArea.setDisable(true);
     }
 }
