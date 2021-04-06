@@ -4,15 +4,21 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.control.TextField?>
 
+<?import javafx.scene.control.PasswordField?>
 <VBox fx:controller="lev.philippov.Controller" xmlns:fx="http://javafx.com/fxml" alignment="center">
-    <HBox fx:id="signInArea" >
+
+    <HBox fx:id="signInArea">
         <TextField fx:id="loginField" maxWidth="Infinity" HBox.hgrow="ALWAYS" maxHeight="100"/>
-        <TextField fx:id="passField" maxWidth="Infinity"  HBox.hgrow="ALWAYS" maxHeight="100"/>
+        <PasswordField fx:id="passField" maxWidth="Infinity"  HBox.hgrow="ALWAYS" maxHeight="100"/>
         <Button text="Войти" maxWidth="150" maxHeight="100" minWidth="100" onAction="#getConnectiontoServer"/>
     </HBox>
-    <TextArea fx:id="textArea" VBox.vgrow="ALWAYS" editable="false"/>
-    <HBox>
-        <TextField fx:id="msgField" promptText="Введите сообщение..." HBox.hgrow="ALWAYS" onAction="#sendMsg"/>
-        <Button text="Отправить" onAction="#sendMsg"/>
-    </HBox>
+
+    <VBox fx:id="area" VBox.vgrow="ALWAYS">
+        <TextArea fx:id="textArea" VBox.vgrow="ALWAYS" editable="false"/>
+        <HBox>
+            <TextField fx:id="msgField" promptText="Введите сообщение..." HBox.hgrow="ALWAYS" onAction="#sendMsg"/>
+            <Button text="Отправить" onAction="#sendMsg"/>
+        </HBox>
+    </VBox>
+
 </VBox>

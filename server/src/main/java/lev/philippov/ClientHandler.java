@@ -5,12 +5,16 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.Arrays;
 
 
 public class ClientHandler {
+
+    private Client client;
     private Server server;
     private Socket socket;
     private Logger logger;
+    private boolean authFlag;
     protected static final int AUTH = 1;
     protected static final int MSG = 2;
     protected static final int SRVS = 3;
@@ -22,6 +26,7 @@ public class ClientHandler {
     public ClientHandler(Server server, Socket socket) {
         this.server = server;
         this.socket = socket;
+        this.authFlag=false;
         this.logger = LoggerFactory.getLogger(this.getClass().getName());
         handleTheClient();
     }
@@ -35,7 +40,7 @@ public class ClientHandler {
                 try{
                     while (true) {
                         Object obj = ois.readObject();
-                        msgResolver(obj);
+                            msgResolver(obj);
                     }
                 } catch (IOException | ClassNotFoundException e) {
                     logger.error(e.getMessage());
@@ -54,32 +59,6 @@ public class ClientHandler {
             logger.error(e.getMessage());
         }
     }
-    @Deprecated
-    private void listeningWithDataOS() throws IOException {
-        DataInputStream dis = new DataInputStream(socket.getInputStream());
-        DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-
-        Thread t = new Thread(() -> {
-            try {
-               while (true) {
-//                       int x;
-//                       while ((x=dis.read())!=-1) {
-//                           System.out.println(x);
-//                       }
-                   String message= dis.readUTF();
-                    if (message.equals("/end")) break;
-                   System.out.println(message);
-                   dos.writeUTF("ECHO: "+ message);
-               }
-            } catch (IOException e) {
-                logger.error(e.getMessage());
-            } finally {
-                closeConnection(dis);
-            }
-        });
-        t.setDaemon(true);
-        t.start();
-    }
 
     private void closeConnection(DataInputStream dis) {
         try {
@@ -96,6 +75,7 @@ public class ClientHandler {
     }
 
     private void closeObjectStreamConnections() {
+        server.unsubscribeClientToServer(this);
         try {
             ois.close();
         } catch (IOException e) {
@@ -116,31 +96,58 @@ public class ClientHandler {
     private void msgResolver(Object obj) {
             if (obj instanceof AuthMsg) {
                 AuthMsg authMsg = (AuthMsg) obj;
-                if(server.checkReg(authMsg.getLogin(), authMsg.getPassword()))  {
-                    msgSender(AUTH, authMsg);
+                if(server.checkReg(authMsg, this)) {
+                    msgSender(AUTH, new SrvsMsg(), null);
                 }
             }
-            if (obj instanceof ChatMsg) {
+            if (obj instanceof ChatMsg && authFlag) {
                 server.broadcast((ChatMsg)obj);
             }
     }
 
-    public void msgSender(int type, Serializable obj) {
+    public void msgSender(int type, Serializable obj, String message) {
         try {
             switch (type) {
-                case AUTH:
-                    AuthMsg authMsg = ((AuthMsg) obj);
-                    authMsg.setPassword("");
-                    oos.writeObject(authMsg);
-                    logger.info("Клиенту с логином " + authMsg.getLogin() + " отправлено подтверждение об успешной регистрации.");
+                //TODO: переделать на класс SrvsMsg
+                case AUTH: {
+                    SrvsMsg srvsMsg = (SrvsMsg) obj;
+                    srvsMsg.setType(AUTH);
+                    srvsMsg.setField_1(client.getName());
+                    oos.writeObject(srvsMsg);
+                    logger.info("Клиенту с логином " + client.getName() + " отправлено подтверждение об успешной регистрации.");
                     break;
-                case MSG:
+                }
+                case MSG: {
                     oos.writeObject(obj);
+                    break;
+                }
+                case SRVS: {
+                    SrvsMsg srvsMsg = (SrvsMsg) obj;
+                    srvsMsg.setType(SRVS);
+                    srvsMsg.setField_1(message);
+                    oos.writeObject(srvsMsg);
+                    break;
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    public void setClient(Client client) {
+        this.client = client;
+    }
 
+    public Client getClient() {
+        return client;
+    }
+
+    public void setAuthenticated(){
+        authFlag=true;
+    }
+
+    public void disconnect() {
+        msgSender(ClientHandler.SRVS, new SrvsMsg(), "Вы были отключены от сервера.");
+        closeObjectStreamConnections();
+    }
 }
