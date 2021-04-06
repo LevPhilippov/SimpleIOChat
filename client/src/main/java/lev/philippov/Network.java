@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.lang.reflect.Method;
 import java.net.Socket;
 
 @Getter
@@ -21,7 +20,7 @@ public class Network {
     private ObjectOutputStream oos;
     private ObjectInputStream ois;
     private Logger networkLogger;
-    private String login;
+    private String name;
 
 
     public Network(Controller controller) {
@@ -75,57 +74,13 @@ public class Network {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        controller.logOut();
     }
 
-    private void startTexting() throws IOException {
-        this.in = new DataInputStream(socket.getInputStream());
-        this.out = new DataOutputStream(socket.getOutputStream());
-        Thread t = new Thread(() -> {
-            try {
-                while (true) {
-                    String msg = in.readUTF();
-                    System.out.println(Method.class.getName() + ": " + msg);
-                    controller.receiveMsg(msg);
-                }
-            } catch (IOException ignored) {
-            } finally {
-                closeConnection();
-            }
-        });
-        t.setDaemon(true);
-        t.start();
-    }
 
-//    private void authorization() {
-//            Thread t = new Thread(() -> {
-//            SrvsMsg ms = new SrvsMsg();
-//            msgToken.setToken(Token.AUTH);
-//            try {
-//                oos.writeObject(msgToken);
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//            while (true) {
-//                try {
-//                    if(Thread.currentThread().isInterrupted()) break;
-//                    Object obj = ois.readObject();
-//                    if(obj instanceof SrvsMsg) {
-//                        SrvsMsg ansToken = (SrvsMsg) obj;
-//                    } else {
-//                        Thread.currentThread().interrupt();
-//                    }
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                } catch (ClassNotFoundException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//            networkLogger.info("Поток авторизации закрылся с флагом isInterrupted";
-//        });
-//    }
 
     public void sendObj(String msg) {
-        ChatMsg chatMsg = ChatMsg.builder().message(msg).name(login).build();
+        ChatMsg chatMsg = ChatMsg.builder().message(msg).name(name).build();
         try {
             oos.writeObject(chatMsg);
         } catch (IOException e) {
@@ -133,13 +88,6 @@ public class Network {
         }
     }
 
-//    public void sendMsg(String msg) {
-//        try {
-//            out.writeUTF(msg);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
 
     public void sendAuthMsg(String login, String password) {
         AuthMsg auth = AuthMsg.builder().login(login).password(password).build();
@@ -150,38 +98,22 @@ public class Network {
         }
     }
 
-    public void closeConnection() {
-        try {
-            socket.close();
-            networkLogger.info("Socket closed.");
-        } catch (IOException e) {
-            networkLogger.error(Method.class.getName() + ": ошибка при закрытии socket.\n" + e.getMessage());
-        }
-        try {
-            in.close();
-            networkLogger.info("In closed.");
-        } catch (IOException e) {
-            networkLogger.error(Method.class.getName() + ": ошибка при закрытии InputStream.\n" + e.getMessage());
-
-        }
-        try {
-            out.close();
-            networkLogger.info("Out closed.");
-        } catch (IOException e) {
-            networkLogger.error(Method.class.getName() + ": ошибка при закрытии Output stream.\n" + e.getMessage());
-        }
-
-    }
-
     public void msgResolver(Object obj) {
-        if (obj instanceof AuthMsg) {
+        if (obj instanceof SrvsMsg) {
+            SrvsMsg srvsMsg = (SrvsMsg) obj;
+            if(srvsMsg.getType() == 1) {
                 networkLogger.info("Сервер прислал сообщение об успешной регистрации.");
-                login = ((AuthMsg) obj).getLogin();
+                name = ((SrvsMsg) obj).getField_1();
                 controller.logIn();
+            }
+            if(srvsMsg.getType()==3) {
+                networkLogger.info("Сервер прислал сообщение: " + srvsMsg.getField_1());
+                controller.receiveMsg("Server: " + srvsMsg.getField_1());
+            }
         }
         if (obj instanceof ChatMsg) {
                 ChatMsg msg = ((ChatMsg) obj);
-                networkLogger.info("Сервер прислал новое собщение");
+//                networkLogger.info("Сервер прислал новое собщение");
                 StringBuilder builder = new StringBuilder();
                 builder.append(msg.getName()).append(": ").append(msg.getMessage());
                 controller.receiveMsg(builder.toString());
