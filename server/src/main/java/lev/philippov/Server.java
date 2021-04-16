@@ -1,5 +1,9 @@
 package lev.philippov;
 
+import lev.philippov.Models.Client;
+import lev.philippov.Services.AuthJDBCService;
+import lev.philippov.Services.AuthService;
+import lev.philippov.Services.SelfListeningService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,12 +14,12 @@ import java.util.Vector;
 
 public class Server {
 
-    private Vector<ClientHandler> clientHandler;
+    private final Vector<ClientHandler> clientHandler;
 
 //    private ConcurrentHashMap<String, String> simpleAuthData;
 
     private AuthService authService;
-    private SelfListeningService selfListeningService;
+    private final AuthJDBCService authJDBCService;
 
     Logger log;
 
@@ -23,7 +27,8 @@ public class Server {
         this.clientHandler = new Vector<>();
 //        this.simpleAuthData = new ConcurrentHashMap<>();
         this.authService = new AuthService();
-        this.selfListeningService = new SelfListeningService(this);
+        this.authJDBCService = new AuthJDBCService();
+        new SelfListeningService(this);
         this.log=LoggerFactory.getLogger(this.getClass().getName());
         log.info("Logger is ready.");
     }
@@ -55,15 +60,16 @@ public class Server {
 
 
     public boolean checkReg(AuthMsg msg, ClientHandler clientHandler) {
-        if(authService.checkRegistrationData(msg)){
-            clientHandler.setClient(authService.getClientFromLogin(msg.getLogin()));
-            subscribeClientToServer(clientHandler);
-            clientHandler.setAuthenticated();
-            this.log.info("Клиент с логином " + msg.getLogin() + "успешно вошел в чат и подписан на рассылку!");
-            return true;
+        Client client = authJDBCService.authorizeClient(msg);
+        if(client==null) {
+            this.log.info("Клиент с логином " + msg.getLogin() + " не найден!");
+            return false;
         }
-        this.log.info("Клиент с логином " + msg.getLogin() + "не найден!");
-        return false;
+        clientHandler.setClient(client);
+        subscribeClientToServer(clientHandler);
+        clientHandler.setAuthenticated();
+        this.log.info("Клиент с логином " + msg.getLogin() + "успешно вошел в чат и подписан на рассылку!");
+        return true;
     }
 
 

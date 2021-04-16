@@ -1,11 +1,11 @@
 package lev.philippov;
 
+import lev.philippov.Models.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.Arrays;
 
 
 public class ClientHandler {
@@ -114,7 +114,7 @@ public class ClientHandler {
                     srvsMsg.setType(AUTH);
                     srvsMsg.setField_1(client.getName());
                     oos.writeObject(srvsMsg);
-                    logger.info("Клиенту с логином " + client.getName() + " отправлено подтверждение об успешной регистрации.");
+                    logger.info("Клиенту с именем " + client.getName() + " отправлено подтверждение об успешной регистрации.");
                     break;
                 }
                 case MSG: {

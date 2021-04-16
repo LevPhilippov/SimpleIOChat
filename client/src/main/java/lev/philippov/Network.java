@@ -3,6 +3,7 @@ package lev.philippov;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,7 +91,7 @@ public class Network {
 
 
     public void sendAuthMsg(String login, String password) {
-        AuthMsg auth = AuthMsg.builder().login(login).password(password).build();
+        AuthMsg auth = AuthMsg.builder().login(login).password(DigestUtils.md5Hex(password).toUpperCase()).build();
         try {
             oos.writeObject(auth);
         } catch (IOException e) {
