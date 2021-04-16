@@ -1,4 +1,8 @@
-package lev.philippov;
+package lev.philippov.Services;
+
+import lev.philippov.AuthMsg;
+import lev.philippov.Models.Client;
+import lev.philippov.Interfaces.ClientRepository;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -16,15 +20,18 @@ public class AuthService implements ClientRepository {
     }
 
     @Override
-    public Client getClientFromLogin(String login) {
+    public Client getClientByLogin(String login) {
         return simpleAuthData.get(login);
     }
 
     public boolean checkRegistrationData(AuthMsg msg) {
         Client client;
-        if ((client = getClientFromLogin(msg.getLogin())) == null) return false;
+        if ((client = getClientByLogin(msg.getLogin())) == null) return false;
         return client.getPassword().equals(msg.getPassword());
     }
 
-
+    @Override
+    public Client getClientByLoginAndPassword(String login, String password) {
+        return null;
+    }
 }

@@ -1,4 +1,7 @@
-package lev.philippov;
+package lev.philippov.Services;
+
+import lev.philippov.ChatMsg;
+import lev.philippov.Server;
 
 import java.io.*;
 
