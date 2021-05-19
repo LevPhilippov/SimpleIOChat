@@ -26,7 +26,7 @@ public class Server {
     public Server() {
         this.clientHandler = new Vector<>();
 //        this.simpleAuthData = new ConcurrentHashMap<>();
-        this.authService = new AuthService();
+//        this.authService = new AuthService();
         this.authJDBCService = new AuthJDBCService();
         new SelfListeningService(this);
         this.log=LoggerFactory.getLogger(this.getClass().getName());

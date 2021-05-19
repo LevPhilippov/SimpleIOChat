@@ -13,22 +13,50 @@ public class JDBCBean {
     private Connection connection;
     private Statement statement;
     private PreparedStatement preparedStatement;
-    private static String url = "jdbc:postgresql://localhost:5432/postgres?currentSchema=lesson";
-    private static String user = "postgres";
-    private static String password = "admin";
+    private static String url;
+    private static String user;
+    private static String password;
 
     public JDBCBean() {
-
-
         try {
             Class.forName("org.postgresql.Driver");
-            connection = DriverManager.getConnection(url, user , password);
+            setDBAccessData();
+            connection = DriverManager.getConnection(url, user, password);
             statement = connection.createStatement();
             statement.executeUpdate(readBDConstructionFile());
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
             logger.error("DB isn't runned!\n" + e.getMessage());
         }
+    }
+
+    private void setDBAccessData() {
+        try (
+                InputStream is = this.getClass().getClassLoader().getResourceAsStream("DBAccessData.txt");
+                BufferedReader br = new BufferedReader(new InputStreamReader(is))
+        ) {
+            while (br.ready()) {
+                String line = br.readLine();
+                String[] lines = line.split("\\s", 2);
+
+                switch (lines[0]) {
+                    case ("url"):
+                        url = lines[1];
+                        break;
+                    case ("user"):
+                        user = lines[1];
+                        break;
+                    case ("password"):
+                        password = lines[1];
+                        break;
+                }
+            }
+        } catch (IOException e) {
+            logger.error("Не удалось войти в базу данных!\n" + e.getMessage());
+        }
+        System.out.println(url);
+        System.out.println(user);
+        System.out.println(password);
     }
 
     private String readBDConstructionFile() {
@@ -39,7 +67,7 @@ public class JDBCBean {
                 InputStream is = this.getClass().getClassLoader().getResourceAsStream("DBconstruction.txt");
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(is));
         ) {
-            while (bufferedReader.ready()){
+            while (bufferedReader.ready()) {
                 builder.append(bufferedReader.readLine());
             }
         } catch (IOException e) {
@@ -51,7 +79,7 @@ public class JDBCBean {
     public ResultSet getClientResultSetByLogin(String login) {
         try {
             preparedStatement = connection.prepareStatement("SELECT login, password, name FROM chatdb WHERE login=?");
-            preparedStatement.setString(1,login);
+            preparedStatement.setString(1, login);
             return preparedStatement.executeQuery();
         } catch (SQLException throwables) {
             logger.error(throwables.getMessage());
@@ -62,8 +90,8 @@ public class JDBCBean {
     public ResultSet getClientResultSetByLoginAndPassword(String login, String password) {
         try {
             preparedStatement = connection.prepareStatement("SELECT login, password, name FROM chatdb WHERE login=? and password=?");
-            preparedStatement.setString(1,login);
-            preparedStatement.setString(2,password);
+            preparedStatement.setString(1, login);
+            preparedStatement.setString(2, password);
             return preparedStatement.executeQuery();
         } catch (SQLException throwables) {
             logger.error(throwables.getMessage());
