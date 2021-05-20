@@ -7,9 +7,10 @@ import java.util.Objects;
 @Data
 public class Client {
 
+    private long id;
     private String login;
     private String password;
-    private String name;
+    private String nickName;
 
     @Override
     public boolean equals(Object o) {

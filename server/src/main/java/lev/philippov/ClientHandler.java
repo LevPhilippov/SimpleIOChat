@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.Map;
 
 
 public class ClientHandler {
@@ -15,9 +16,6 @@ public class ClientHandler {
     private Socket socket;
     private Logger logger;
     private boolean authFlag;
-    protected static final int AUTH = 1;
-    protected static final int MSG = 2;
-    protected static final int SRVS = 3;
 
     private ObjectInputStream ois;
     private ObjectOutputStream oos;
@@ -26,7 +24,7 @@ public class ClientHandler {
     public ClientHandler(Server server, Socket socket) {
         this.server = server;
         this.socket = socket;
-        this.authFlag=false;
+        this.authFlag = false;
         this.logger = LoggerFactory.getLogger(this.getClass().getName());
         handleTheClient();
     }
@@ -36,11 +34,11 @@ public class ClientHandler {
             this.oos = new ObjectOutputStream(socket.getOutputStream());
             this.ois = new ObjectInputStream(socket.getInputStream());
 
-            Thread listeningThread = new Thread(()->{
-                try{
+            Thread listeningThread = new Thread(() -> {
+                try {
                     while (true) {
                         Object obj = ois.readObject();
-                            msgResolver(obj);
+                        msgResolver(obj);
                     }
                 } catch (IOException | ClassNotFoundException e) {
                     logger.error(e.getMessage());
@@ -94,41 +92,33 @@ public class ClientHandler {
     }
 
     private void msgResolver(Object obj) {
-            if (obj instanceof AuthMsg) {
-                AuthMsg authMsg = (AuthMsg) obj;
-                if(server.checkReg(authMsg, this)) {
-                    msgSender(AUTH, new SrvsMsg(), null);
+        if (obj instanceof SrvsMsg) {
+            SrvsMsg msg = (SrvsMsg) obj;
+            Map<String, String> params = msg.getParams();
+            //Новая фича
+
+            if (params.containsKey("AUTH")) {
+                msg = server.checkReg(msg, this);
+                msgSender(msg);
+            } else {
+                for (Map.Entry<String, String> e : params.entrySet()) {
+                    switch (e.getKey()) {
+                        case ("nickName"):
+                            server.changeNickname(client, e.getValue(), this);
+                            break;
+                    }
                 }
             }
-            if (obj instanceof ChatMsg && authFlag) {
-                server.broadcast((ChatMsg)obj);
-            }
+        }
+
+        if (obj instanceof ChatMsg && authFlag) {
+            server.broadcast((ChatMsg) obj);
+        }
     }
 
-    public void msgSender(int type, Serializable obj, String message) {
+    public void msgSender(Serializable obj) {
         try {
-            switch (type) {
-                //TODO: переделать на класс SrvsMsg
-                case AUTH: {
-                    SrvsMsg srvsMsg = (SrvsMsg) obj;
-                    srvsMsg.setType(AUTH);
-                    srvsMsg.setField_1(client.getName());
-                    oos.writeObject(srvsMsg);
-                    logger.info("Клиенту с именем " + client.getName() + " отправлено подтверждение об успешной регистрации.");
-                    break;
-                }
-                case MSG: {
-                    oos.writeObject(obj);
-                    break;
-                }
-                case SRVS: {
-                    SrvsMsg srvsMsg = (SrvsMsg) obj;
-                    srvsMsg.setType(SRVS);
-                    srvsMsg.setField_1(message);
-                    oos.writeObject(srvsMsg);
-                    break;
-                }
-            }
+            oos.writeObject(obj);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -142,12 +132,11 @@ public class ClientHandler {
         return client;
     }
 
-    public void setAuthenticated(){
-        authFlag=true;
+    public void setAuthenticated() {
+        authFlag = true;
     }
 
     public void disconnect() {
-        msgSender(ClientHandler.SRVS, new SrvsMsg(), "Вы были отключены от сервера.");
         closeObjectStreamConnections();
     }
 }

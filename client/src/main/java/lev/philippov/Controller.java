@@ -9,23 +9,30 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import org.apache.commons.codec.digest.DigestUtils;
 
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 public class Controller implements Initializable {
 
     @FXML
-    TextField msgField, loginField, passField;
+    private TextField msgField, loginField, passField;
     @FXML
-    TextArea textArea;
+    private TextArea textArea;
     @FXML
-    HBox signInArea;
+    private HBox signInArea;
     @FXML
-    VBox area;
+    private VBox area;
+    @FXML
+    private HBox changeNickBox;
+    @FXML
+    private TextField newnicknamefield;
 
-    Network network;
+    private Network network;
 
     private boolean authFlag=false;
 
@@ -48,7 +55,8 @@ public class Controller implements Initializable {
 
     public void getConnectiontoServer(ActionEvent actionEvent) {
         this.network = new Network(this);
-        network.sendAuthMsg(loginField.getText().trim(),passField.getText() );
+        //передача в меод идет парно по принципу ключ, значение;
+        network.sendSrvsMsg("AUTH","false","login",loginField.getText().trim(), "password", DigestUtils.md5Hex(passField.getText()));
     }
 
     public void logIn(){
@@ -60,6 +68,7 @@ public class Controller implements Initializable {
         }
         changeAuthFlag();
         HIDupdate();
+
     }
 
     public void changeAuthFlag() {
@@ -73,10 +82,25 @@ public class Controller implements Initializable {
         signInArea.setManaged(!authFlag);
         area.setVisible(authFlag);
         area.setManaged(authFlag);
+        changeNickBox.setDisable(true);
+        changeNickBox.setVisible(false);
     }
 
     public void logOut() {
         changeAuthFlag();
         HIDupdate();
+    }
+
+    public void openChangeNicknamePanel(ActionEvent actionEvent) {
+        changeNickBox.setDisable(false);
+        changeNickBox.setVisible(true);
+        newnicknamefield.requestFocus();
+    }
+
+    public void changeNick(ActionEvent actionEvent) {
+        network.sendSrvsMsg("nickName",newnicknamefield.getText());
+        changeNickBox.setDisable(true);
+        changeNickBox.setVisible(false);
+
     }
 }

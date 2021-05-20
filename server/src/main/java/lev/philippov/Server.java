@@ -2,7 +2,7 @@ package lev.philippov;
 
 import lev.philippov.Models.Client;
 import lev.philippov.Services.AuthJDBCService;
-import lev.philippov.Services.AuthService;
+//import lev.philippov.Services.AuthService;
 import lev.philippov.Services.SelfListeningService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +18,7 @@ public class Server {
 
 //    private ConcurrentHashMap<String, String> simpleAuthData;
 
-    private AuthService authService;
+//    private AuthService authService;
     private final AuthJDBCService authJDBCService;
 
     Logger log;
@@ -48,16 +48,14 @@ public class Server {
         }
     }
 
-
     public void subscribeClientToServer(ClientHandler cl) {
         clientHandler.add(cl);
-        log.trace("Client " + cl.getClient().getName() + " subscribed");
+        log.trace("Client " + cl.getClient().getNickName() + " subscribed");
     }
     public void unsubscribeClientToServer(ClientHandler cl) {
         clientHandler.remove(cl);
-        log.trace("Client " + cl.getClient().getName() + " unsubscribed");
+        log.trace("Client " + cl.getClient().getNickName() + " unsubscribed");
     }
-
 
     public boolean checkReg(AuthMsg msg, ClientHandler clientHandler) {
         Client client = authJDBCService.authorizeClient(msg);
@@ -71,21 +69,45 @@ public class Server {
         this.log.info("Клиент с логином " + msg.getLogin() + "успешно вошел в чат и подписан на рассылку!");
         return true;
     }
+    public SrvsMsg checkReg(SrvsMsg msg, ClientHandler clientHandler) {
+        Client client = authJDBCService.authorizeClient(msg);
+        if(client==null) {
+            this.log.info("Клиент с логином " + msg.getParams().get("login") + " не найден!");
+            msg.getParams().put("AUTH", "false");
+            return msg;
+        }
+        clientHandler.setClient(client);
+        subscribeClientToServer(clientHandler);
+        clientHandler.setAuthenticated();
+        msg.getParams().put("AUTH", "true");
+        msg.getParams().put("nickName", client.getNickName());
+        this.log.info("Клиент с логином " + msg.getParams().get("login") + "успешно вошел в чат и подписан на рассылку!");
+        return msg;
+    }
 
+    public void changeNickname(Client client, String nickname, ClientHandler handler) {
+        if (authJDBCService.changeNicknameByClient(client, nickname)>0) {
+            SrvsMsg msg = new SrvsMsg();
+            msg.getParams().put("nickName", nickname);
+            handler.msgSender(msg);
+            handler.msgSender(ChatMsg.builder().nickName("Server").message("Ник успешно изменен на " + nickname).build());
+        }
+    }
 
     public void broadcast(ChatMsg obj) {
         for (ClientHandler handler : clientHandler) {
-            handler.msgSender(ClientHandler.MSG, obj, null);
+            handler.msgSender(obj);
         }
     }
 
     public void disconnectFromServer(String name) {
         ClientHandler handlerForDisconnect=null;
         for (ClientHandler handler : clientHandler) {
-            if(handler.getClient().getName().equals(name)){
+            if(handler.getClient().getNickName().equals(name)){
                 handlerForDisconnect=handler;
                 break;
             }
+            System.out.println("Не найдено подключение с ником" + name);
         }
         if(handlerForDisconnect !=null) handlerForDisconnect.disconnect();
     }

@@ -1,5 +1,6 @@
 package lev.philippov.Config;
 
+import lev.philippov.Models.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,6 +98,18 @@ public class JDBCBean {
             logger.error(throwables.getMessage());
         }
         return null;
+    }
+    public int changeNickname (Client client, String nickname) {
+        try {
+            preparedStatement = connection.prepareStatement("UPDATE chatDB SET name=? where login=? and password=?");
+            preparedStatement.setString(1, nickname);
+            preparedStatement.setString(2, client.getLogin());
+            preparedStatement.setString(3, client.getPassword());
+            return preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            logger.error("Невозможно изменить Nickname пользователя " + client.getLogin() + "\n" + e.getMessage());
+        }
+        return 0;
     }
 
 }
