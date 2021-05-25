@@ -3,12 +3,12 @@ package lev.philippov;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -16,12 +16,12 @@ public class Network {
 
     private Controller controller;
     private Socket socket = null;
-    private DataInputStream in = null;
-    private DataOutputStream out = null;
+//    private DataInputStream in = null;
+//    private DataOutputStream out = null;
     private ObjectOutputStream oos;
     private ObjectInputStream ois;
     private Logger networkLogger;
-    private String name;
+    private String nickName;
 
 
     public Network(Controller controller) {
@@ -80,43 +80,56 @@ public class Network {
 
 
 
-    public void sendObj(String msg) {
-        ChatMsg chatMsg = ChatMsg.builder().message(msg).name(name).build();
+//    public void sendObj(String msg) {
+//        ChatMsg chatMsg = ChatMsg.builder().message(msg).nickName(nickName).build();
+//        sendObj(msg);
+//    }
+    public void sendObj(Serializable obj) {
+        if (obj instanceof String) {
+            obj = ChatMsg.builder().message((String) obj).nickName(nickName).build();
+        }
         try {
-            oos.writeObject(chatMsg);
+            oos.writeObject(obj);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-
-    public void sendAuthMsg(String login, String password) {
-        AuthMsg auth = AuthMsg.builder().login(login).password(DigestUtils.md5Hex(password).toUpperCase()).build();
-        try {
-            oos.writeObject(auth);
-        } catch (IOException e) {
-            networkLogger.error(e.getMessage());
+    public void sendSrvsMsg(String... strings) {
+        SrvsMsg msg = new SrvsMsg();
+        for (int i = 0; i <= strings.length-1;i=i+2) {
+            msg.getParams().put(strings[i],strings[i+1]);
         }
+        sendObj(msg);
     }
 
     public void msgResolver(Object obj) {
         if (obj instanceof SrvsMsg) {
             SrvsMsg srvsMsg = (SrvsMsg) obj;
-            if(srvsMsg.getType() == 1) {
-                networkLogger.info("Сервер прислал сообщение об успешной регистрации.");
-                name = ((SrvsMsg) obj).getField_1();
-                controller.logIn();
-            }
-            if(srvsMsg.getType()==3) {
-                networkLogger.info("Сервер прислал сообщение: " + srvsMsg.getField_1());
-                controller.receiveMsg("Server: " + srvsMsg.getField_1());
+            if (srvsMsg.getParams().containsKey("AUTH")) {
+                if (srvsMsg.getParams().get("AUTH").equals("true")) {
+                    networkLogger.info("Сервер прислал сообщение об успешной регистрации.");
+                    nickName = srvsMsg.getParams().get("nickName");
+                    controller.logIn();
+                } if (!srvsMsg.getParams().get("AUTH").equals("true")) {
+                    // отображение неуспешной регистрации
+                }
+            } else {
+                for (Map.Entry<String, String> e : srvsMsg.getParams().entrySet()) {
+                    switch (e.getKey()){
+                        case "nickName":
+                            nickName = e.getValue();
+                            break;
+                    }
+
+                }
             }
         }
+
         if (obj instanceof ChatMsg) {
                 ChatMsg msg = ((ChatMsg) obj);
-//                networkLogger.info("Сервер прислал новое собщение");
                 StringBuilder builder = new StringBuilder();
-                builder.append(msg.getName()).append(": ").append(msg.getMessage());
+                builder.append(msg.getNickName()).append(": ").append(msg.getMessage());
                 controller.receiveMsg(builder.toString());
         }
     }

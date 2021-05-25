@@ -9,9 +9,8 @@ import java.io.Serializable;
 @Builder
 public class ChatMsg implements Serializable {
 
-    private Long id;
 
-    private String name;
+    private String nickName;
 
     private String message;
 

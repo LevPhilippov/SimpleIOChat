@@ -28,7 +28,7 @@ public class ClientRepositoryImpl implements ClientRepository {
                 Client client = new Client();
                 client.setLogin(login);
                 client.setPassword(password);
-                client.setName(name);
+                client.setNickName(name);
                 return client;
             }} catch (SQLException e){
                 logger.error("Ошибка в интерпретировании ResultSet\n" + e.getMessage());
@@ -44,12 +44,16 @@ public class ClientRepositoryImpl implements ClientRepository {
                 Client client = new Client();
                 client.setLogin(login);
                 client.setPassword(password);
-                client.setName(resultSet.getString("name"));
+                client.setNickName(resultSet.getString("name"));
                 return client;
             }
         } catch (SQLException e){
                 logger.error("Ошибка в интерпретировании ResultSet\n" + e.getMessage());
             }
         return null;
+    }
+    @Override
+    public int changeNickNameByClient(Client client, String nickname) {
+        return jdbcBean.changeNickname(client, nickname);
     }
 }

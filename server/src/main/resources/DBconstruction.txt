@@ -7,4 +7,4 @@ password varchar not null,
 name text not null,
 primary key (id)
 );
-INSERT INTO chatDB (login, password, name) VALUES ('John','827CCB0EEA8A706C4C34A16891F84E7B','Nagibator666');
+INSERT INTO chatDB (login, password, name) VALUES ('John','827ccb0eea8a706c4c34a16891f84e7b','Nagibator666');

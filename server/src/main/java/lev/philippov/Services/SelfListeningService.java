@@ -37,10 +37,10 @@ public class SelfListeningService {
                     server.disconnectFromServer(tokens[1].trim());
                 case "/broadcast":
                     System.out.println(tokens[1].trim());
-                    server.broadcast(ChatMsg.builder().name("Server").message(tokens[1].trim()).build());
+                    server.broadcast(ChatMsg.builder().nickName("Server").message(tokens[1].trim()).build());
             }
         } else System.out.println("Не верная команда! Список доступных команд:\n/disconnect " +
-                "[Name of client]\n/broadcast [Message you want to broarcast]");
+                "[Name of client]\n/broadcast [Message you want to broadcast]");
 
     }
 }
