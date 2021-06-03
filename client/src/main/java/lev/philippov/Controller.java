@@ -68,7 +68,7 @@ public class Controller implements Initializable {
         }
         changeAuthFlag();
         HIDupdate();
-
+        textArea.appendText(network.loadHistory());
     }
 
     public void changeAuthFlag() {
