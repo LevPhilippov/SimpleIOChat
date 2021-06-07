@@ -4,6 +4,7 @@ import jdk.internal.util.xml.impl.Input;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.apache.logging.log4j.LogManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,14 +23,16 @@ public class Network {
 //    private DataOutputStream out = null;
     private ObjectOutputStream oos;
     private ObjectInputStream ois;
-    private Logger networkLogger;
+//    private Logger networkLogger;
+    private org.apache.logging.log4j.Logger networkLogger;
     private String nickName;
     private File history;
 
 
     public Network(Controller controller) {
         this.controller = controller;
-        networkLogger = LoggerFactory.getLogger(this.getClass().getName());
+//        networkLogger = LoggerFactory.getLogger(this.getClass().getName());
+        networkLogger = LogManager.getLogger(this.getClass().getName());
         networkLogger.info("Network logger is ready!");
         initiateConnection();
     }
@@ -58,7 +61,7 @@ public class Network {
             listeningThread.start();
 
         } catch (IOException e) {
-            e.printStackTrace();
+            networkLogger.error("Ошибка инициализации соединения!\n" + e.getMessage());
         }
     }
 
@@ -93,7 +96,7 @@ public class Network {
         try {
             oos.writeObject(obj);
         } catch (IOException e) {
-            e.printStackTrace();
+            networkLogger.error("Ошибка при отправке сообщения!\n" + e.getMessage());
         }
     }
 
